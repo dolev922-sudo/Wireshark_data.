@@ -21,7 +21,7 @@ TRANSACTION_COLUMNS = {
     "host": "Host",
     "uri": st.column_config.TextColumn("URI", width="medium"),
     "status": st.column_config.NumberColumn("Status", format="%d", width="small"),
-    "state": st.column_config.TextColumn("State", width="small"),
+    "state": st.column_config.TextColumn("State"),
     "request_frame": st.column_config.NumberColumn("Req frame", format="%d"),
     "response_frame": st.column_config.NumberColumn("Resp frame", format="%d",
                                                     help="Frame that completes the response (where Wireshark shows it)."),
