@@ -1,0 +1,27 @@
+# Secrets - never commit API keys
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Private captures should not be published by accident (bundled samples are allowed)
+*.pcap
+*.pcapng
+*.cap
+!samples/*.pcap
+!samples/*.pcapng
