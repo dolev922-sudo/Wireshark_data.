@@ -71,7 +71,8 @@ def protocol_bars(distribution: pd.DataFrame, measure: str) -> go.Figure:
         text=labels, textposition="outside", textfont=dict(color=TEXT_SECONDARY, size=11), cliponaxis=False,
         customdata=hover, hovertemplate="<b>%{y}</b><br>%{customdata}<extra></extra>",
     ))
-    figure.update_xaxes(title_text="Packets" if measure == "packets" else "Bytes", showgrid=True)
+    figure.update_xaxes(title_text="Packets" if measure == "packets" else "Bytes", showgrid=True,
+                        range=[0, float(data[measure].max()) * 1.18])      # room for the value labels
     figure.update_yaxes(showgrid=False, tickfont=dict(color=TEXT_SECONDARY))
     figure.update_layout(bargap=0.4)
     return _style(figure, height=max(220, 34 * len(data) + 70))

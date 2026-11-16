@@ -76,10 +76,10 @@ RESPONSE_SCHEMA: dict[str, Any] = {
 }
 
 SUGGESTED_QUESTIONS = [
-    "Which HTTP request had the longest response time?",
-    "Were there any HTTP errors in this capture?",
-    "Which requests did not receive a response?",
-    "Which hosts did the client contact over HTTP?",
+    "Which HTTP request was the slowest?",
+    "Were there any HTTP errors?",
+    "Which requests got no response?",
+    "Which hosts were contacted over HTTP?",
     "כמה חבילות יש בהקלטה ומה משך הזמן שלה?",
     "אילו פרוטוקולים מופיעים בהקלטה?",
 ]

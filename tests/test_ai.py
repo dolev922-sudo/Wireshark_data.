@@ -244,18 +244,24 @@ def test_empty_question_makes_no_api_call(basic):
     assert client.calls == []
 
 
-def test_settings_load_from_env_file(tmp_path, monkeypatch):
-    for name in ("GEMINI_API_KEY", "GEMINI_MODEL", "AI_ENABLED", "SLOW_THRESHOLD_MS"):
-        monkeypatch.delenv(name, raising=False)
-    env_file = tmp_path / ".env"
-    env_file.write_text("GEMINI_API_KEY=abc123\nGEMINI_MODEL=gemini-2.5-flash-lite\nAI_ENABLED=false\nSLOW_THRESHOLD_MS=250\n")
-    settings = load_settings(env_file)
-    assert (settings.gemini_api_key, settings.gemini_model, settings.ai_enabled) == ("abc123", "gemini-2.5-flash-lite", False)
-    assert settings.slow_threshold_seconds == 0.25 and settings.has_api_key and not settings.ai_ready
-    for name in ("GEMINI_API_KEY", "GEMINI_MODEL", "AI_ENABLED", "SLOW_THRESHOLD_MS"):
-        monkeypatch.delenv(name, raising=False)
-    defaults = load_settings(tmp_path / "missing.env")
-    assert defaults.gemini_model == "gemini-2.5-flash" and defaults.ai_enabled and not defaults.has_api_key
+def test_settings_load_from_env_file(tmp_path):
+    import os
+    names = ("GEMINI_API_KEY", "GEMINI_MODEL", "AI_ENABLED", "SLOW_THRESHOLD_MS")
+    saved = {name: os.environ.pop(name) for name in names if name in os.environ}
+    try:
+        env_file = tmp_path / ".env"
+        env_file.write_text("GEMINI_API_KEY=abc123\nGEMINI_MODEL=gemini-2.5-flash-lite\nAI_ENABLED=false\nSLOW_THRESHOLD_MS=250\n")
+        settings = load_settings(env_file)
+        assert (settings.gemini_api_key, settings.gemini_model, settings.ai_enabled) == ("abc123", "gemini-2.5-flash-lite", False)
+        assert settings.slow_threshold_seconds == 0.25 and settings.has_api_key and not settings.ai_ready
+        for name in names:
+            os.environ.pop(name, None)
+        defaults = load_settings(tmp_path / "missing.env")
+        assert defaults.gemini_model == "gemini-2.5-flash" and defaults.ai_enabled and not defaults.has_api_key
+    finally:                       # load_dotenv writes into os.environ: leave no trace for other tests
+        for name in names:
+            os.environ.pop(name, None)
+        os.environ.update(saved)
 
 
 # ---- local fallback ------------------------------------------------------------

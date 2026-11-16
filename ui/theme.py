@@ -87,7 +87,7 @@ h1, h2, h3 {{ letter-spacing: -0.01em; }}
 .nta-hero {{ background:{SURFACE}; border:1px solid {BORDER}; border-radius:16px; padding:2.2rem 2.4rem; }}
 .nta-hero h1 {{ font-size:2rem; margin:0 0 .5rem 0; color:{TEXT}; }}
 .nta-hero p {{ color:{TEXT_SECONDARY}; font-size:1.02rem; max-width:62ch; margin:0; }}
-.nta-feature-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.8rem; margin-top:1rem; }}
+.nta-feature-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.8rem; margin-top:1rem; }}
 
 code, .nta-mono {{ font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }}
 /* Hebrew and English answers: each paragraph picks its own text direction. */
