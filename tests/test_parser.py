@@ -190,3 +190,28 @@ def test_max_packets_limit(basic_builder):
 def test_detect_format():
     assert detect_format(b"\x0a\x0d\x0d\x0a" + b"\x00" * 30) == "pcapng"
     assert detect_format(b"\xa1\xb2\x3c\x4d" + b"\x00" * 30) == "pcap"
+
+
+def test_decoder_agrees_with_scapy_dissection_on_sample_capture():
+    """Independent cross-check: our header decoder vs. Scapy's own full dissection, frame by frame."""
+    from pathlib import Path
+
+    from scapy.layers.inet import TCP
+    from scapy.utils import rdpcap
+
+    path = Path(__file__).resolve().parent.parent / "samples" / "sample_http.pcap"
+    analysis = analyze_capture(path.read_bytes())
+    reference = rdpcap(str(path))
+    assert analysis.packet_count == len(reference) == 123
+    for record, packet in zip(analysis.packets, reference):
+        assert record.timestamp == pytest.approx(float(packet.time), abs=1e-6)
+        assert record.wire_length == len(packet)
+        if packet.haslayer(IP):
+            assert (record.src_ip, record.dst_ip) == (packet[IP].src, packet[IP].dst)
+        if packet.haslayer(TCP):
+            tcp = packet[TCP]
+            assert (record.src_port, record.dst_port, record.tcp_seq, record.tcp_ack) == (tcp.sport, tcp.dport, tcp.seq, tcp.ack)
+            assert record.tcp_flags == int(tcp.flags)
+            assert record.payload_length == len(bytes(tcp.payload))
+        if packet.haslayer(UDP):
+            assert (record.src_port, record.dst_port) == (packet[UDP].sport, packet[UDP].dport)

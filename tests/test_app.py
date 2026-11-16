@@ -122,3 +122,69 @@ def test_frame_dissection_shows_real_layers(monkeypatch):
     text = dissect(analysis, 7)
     assert "###[ Ethernet ]###" in text and "###[ TCP ]###" in text and "GET / HTTP/1.1" in text
     assert hex_dump(analysis.raw_frames[6]).startswith("0000  02 00 00 00 00 02")
+
+
+class _FakeGemini:
+    """Replaces the network client inside GeminiAssistant for UI tests."""
+
+    def __init__(self, reply=None, error=None):
+        from types import SimpleNamespace
+        self.calls = []
+
+        def generate(**kwargs):
+            self.calls.append(kwargs)
+            if error:
+                raise error
+            return SimpleNamespace(text=reply)
+        self.models = SimpleNamespace(generate_content=generate)
+
+
+def _ai_page_with_key(monkeypatch, fake):
+    import streamlit as st
+
+    from analyzer.ai_assistant import GeminiAssistant
+    monkeypatch.chdir(ROOT)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key-for-tests")
+    monkeypatch.setenv("AI_ENABLED", "true")
+    st.cache_resource.clear()                       # settings are cached per process
+    monkeypatch.setattr(GeminiAssistant, "_get_client", lambda self: fake)
+    return run_page("page_ai")
+
+
+def test_ai_page_requires_consent_before_calling_gemini(monkeypatch):
+    import json
+    fake = _FakeGemini(json.dumps({"answer": "T0007 was the slowest; see also frame 9999.", "data_available": True,
+                                   "evidence": [{"transaction_id": "T0007", "note": "slowest"},
+                                                {"frame": 9999, "note": "invented"}]}))
+    app = _ai_page_with_key(monkeypatch, fake)
+    assert "Gemini ready" in markdown_text(app)
+    assert app.radio[0].options == ["Local engine (offline)"]          # Gemini is not offered before consent
+    app.chat_input[0].set_value("Which request was slowest?").run()
+    assert fake.calls == []                                             # nothing was sent
+
+    app.checkbox(key="ai_consent").check().run()
+    assert app.radio[0].options == ["Gemini", "Local engine (offline)"]
+    app.chat_input[0].set_value("Which request was the slowest one?").run()
+    assert not app.exception and len(fake.calls) == 1
+    assert "T0007 was the slowest" in markdown_text(app)
+    assert any("Frame 9999 does not exist" in error.value for error in app.error)       # fabricated evidence reported
+    evidence = app.dataframe[-1].value
+    assert list(evidence["Reference"]) == ["T0007"] and "1840.5 ms" in evidence.iloc[0, 1]
+
+    app.chat_input[0].set_value("Which request was the slowest one?").run()              # same question again
+    assert len(fake.calls) == 1                                                          # served from the cache
+    import streamlit as st
+    st.cache_resource.clear()
+
+
+def test_ai_page_falls_back_when_gemini_quota_is_exhausted(monkeypatch):
+    from google.genai import errors
+    quota = errors.ClientError(429, {"error": {"code": 429, "message": "quota", "status": "RESOURCE_EXHAUSTED"}})
+    app = _ai_page_with_key(monkeypatch, _FakeGemini(error=quota))
+    app.checkbox(key="ai_consent").check().run()
+    app.chat_input[0].set_value("Were there any HTTP errors?").run()
+    assert not app.exception
+    assert any("quota" in warning.value and "local engine" in warning.value for warning in app.warning)
+    assert "2 HTTP response(s) have an error status" in markdown_text(app)
+    import streamlit as st
+    st.cache_resource.clear()
