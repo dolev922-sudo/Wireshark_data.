@@ -28,7 +28,11 @@ copy .env.example .env
 streamlit run app.py
 ```
 
-The dashboard opens at <http://localhost:8501>. You can also double-click `run.bat`.
+The dashboard opens at <http://localhost:8501>.
+
+**Without a command line (Windows):** install Python 3.11+ from python.org (tick *Add python.exe to PATH*),
+download the repository as a ZIP (green *Code* button → *Download ZIP*), extract it, and double-click
+`run.bat`. The first run sets everything up automatically; later runs start immediately.
 On macOS / Linux use `python3 -m venv .venv && source .venv/bin/activate` and `cp .env.example .env`.
 
 No Npcap/WinPcap is needed: the app only *reads* capture files, it never sniffs the network.
