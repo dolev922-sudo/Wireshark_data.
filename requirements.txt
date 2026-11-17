@@ -1,0 +1,8 @@
+# Network Traffic Analyzer Dashboard - Python 3.11+
+streamlit>=1.50
+scapy>=2.5
+plotly>=5.20
+pandas>=2.1
+google-genai>=1.0
+python-dotenv>=1.0
+pytest>=8.0
